@@ -1,0 +1,1 @@
+fastapi>=0.115.0\nuvicorn[standard]>=0.30.0\nopenai>=1.100.0\n
