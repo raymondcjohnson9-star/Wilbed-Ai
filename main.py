@@ -14,6 +14,14 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 
 from assistant import get_response
+from voice import WilbedVoice
+from kivy.network.urlrequest import UrlRequest
+import json
+
+try:
+    from config import API_BASE_URL
+except ImportError:
+    API_BASE_URL = ""
 
 
 # WILBED AI COLOURS
@@ -90,6 +98,11 @@ class WilbedAI(App):
         self.create_header()
         self.create_ai_core()
         self.create_status()
+        self.voice = WilbedVoice(
+            on_text=self.on_voice_text,
+            on_status=self.on_voice_status
+        )
+        self.previous_response_id = None
         self.create_chat()
         self.create_input_area()
         self.create_footer()
@@ -334,15 +347,14 @@ class WilbedAI(App):
             return
 
         if name == "VOICE":
-            self.status.text = (
-                "[color=FFB347]VOICE MODULE NOT YET CONNECTED[/color]"
-            )
+            self.voice.listen()
+            return
         else:
             self.status.text = (
                 f"[color=00D9FF]● WILBED {name}[/color]"
             )
 
-    def send_message(self, instance):
+    def send_message(self, instance=None):
 
         message = self.message_input.text.strip()
 
@@ -353,9 +365,50 @@ class WilbedAI(App):
 
         self.message_input.text = ""
 
-        # Ask the local Wilbed brain for a reply.
-        reply = get_response(message)
+        # Use the secure OpenAI backend when configured; otherwise keep
+        # the offline assistant available.
+        if API_BASE_URL.strip():
+            self.status.text = "[color=FFB347]● WILBED IS THINKING[/color]"
+            UrlRequest(
+                API_BASE_URL.rstrip("/") + "/v1/ask",
+                req_body=json.dumps({
+                    "message": message,
+                    "previous_response_id": self.previous_response_id
+                }),
+                req_headers={"Content-Type": "application/json"},
+                on_success=self.on_ai_success,
+                on_failure=self.on_ai_failure,
+                on_error=self.on_ai_error,
+                method="POST",
+                timeout=45
+            )
+        else:
+            reply = get_response(message)
+            self.add_message("WILBED", reply)
+            self.voice.speak(reply)
+            self.status.text = "[color=00D9FF]● OFFLINE MODE[/color]"
+
+    def on_voice_text(self, text):
+        self.message_input.text = text
+        self.send_message()
+
+    def on_voice_status(self, status):
+        self.status.text = f"[color=00D9FF]● {status}[/color]"
+
+    def on_ai_success(self, request, result):
+        reply = result.get("reply", "I couldn't form a response.")
+        self.previous_response_id = result.get("response_id")
         self.add_message("WILBED", reply)
+        self.voice.speak(reply)
+        self.status.text = "[color=00D9FF]● WILBED SYSTEM ONLINE[/color]"
+
+    def on_ai_failure(self, request, result):
+        self.status.text = "[color=FFB347]● AI SERVER REJECTED THE REQUEST[/color]"
+        self.add_message("WILBED", "I couldn't reach the AI service. Please try again.")
+
+    def on_ai_error(self, request, error):
+        self.status.text = "[color=FFB347]● CONNECTION ERROR[/color]"
+        self.add_message("WILBED", "I couldn't connect to the AI server. Check your connection.")
 
 
 if __name__ == "__main__":
