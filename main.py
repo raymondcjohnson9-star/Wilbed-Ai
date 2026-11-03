@@ -42,8 +42,8 @@ class AIOrb(Widget):
 
         self.bind(pos=self.draw_orb, size=self.draw_orb)
 
-        self.animation = Animation(opacity=0.35, duration=1.2) + \
-                         Animation(opacity=1, duration=1.2)
+        self.animation = Animation(a=0.35, duration=1.2) + \
+                         Animation(a=1, duration=1.2)
 
         self.animation.repeat = True
         self.animation.start(self.glow_color)
