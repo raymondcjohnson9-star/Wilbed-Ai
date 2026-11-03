@@ -18,7 +18,8 @@ fullscreen = 0
 android.api = 34
 android.minapi = 24
 android.ndk = 25b
-android.archs = arm64-v8a
+# Build for both 64-bit and 32-bit ARM Android phones.
+android.archs = arm64-v8a, armeabi-v7a
 android.accept_sdk_license = True
 
 # Use a stable python-for-android release with Python 3.11 support.
