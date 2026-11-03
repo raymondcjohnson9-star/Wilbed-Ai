@@ -304,7 +304,8 @@ class WilbedAI(App):
             ("⌂", "HOME"),
             ("◉", "VOICE"),
             ("◈", "MEMORY"),
-            ("⚙", "SETTINGS")
+            ("⚙", "SETTINGS"),
+            ("⌘", "CODE")
         ]
 
         for symbol, name in buttons:
@@ -327,6 +328,10 @@ class WilbedAI(App):
         self.root_layout.add_widget(footer)
 
     def footer_action(self, name):
+
+        if name == "CODE":
+            self.add_message("WILBED", get_response("teach me programming"))
+            return
 
         if name == "VOICE":
             self.status.text = (
