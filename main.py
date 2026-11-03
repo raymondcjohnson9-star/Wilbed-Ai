@@ -13,6 +13,8 @@ from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 
+from assistant import get_response
+
 
 # WILBED AI COLOURS
 BG = (0.015, 0.025, 0.07, 1)
@@ -346,12 +348,9 @@ class WilbedAI(App):
 
         self.message_input.text = ""
 
-        # Temporary response until AI engine is connected.
-        self.add_message(
-            "WILBED",
-            "I received your message. My AI intelligence module "
-            "will be connected in the next development stage."
-        )
+        # Ask the local Wilbed brain for a reply.
+        reply = get_response(message)
+        self.add_message("WILBED", reply)
 
 
 if __name__ == "__main__":
