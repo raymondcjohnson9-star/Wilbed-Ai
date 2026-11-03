@@ -57,8 +57,8 @@ class WilbedVoice:
             Intent = autoclass("android.content.Intent")
             RecognizerIntent = autoclass("android.speech.RecognizerIntent")
 
-            def launch(results):
-                if not results or not results[0]:
+            def launch(permissions, grants):
+                if not grants or not all(grants):
                     self.on_status("MICROPHONE PERMISSION NOT GRANTED")
                     return
                 intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
