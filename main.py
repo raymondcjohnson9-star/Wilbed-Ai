@@ -354,6 +354,10 @@ class WilbedAI(App):
                 f"[color=00D9FF]● WILBED {name}[/color]"
             )
 
+    def on_stop(self):
+        if hasattr(self, "voice") and self.voice:
+            self.voice.shutdown()
+
     def send_message(self, instance=None):
 
         message = self.message_input.text.strip()
