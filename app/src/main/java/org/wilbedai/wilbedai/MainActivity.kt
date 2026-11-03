@@ -156,7 +156,7 @@ private fun WilbedApp(activity: MainActivity) {
     var draft by rememberSaveable { mutableStateOf("") }
     var showTools by rememberSaveable { mutableStateOf(false) }
     var status by rememberSaveable { mutableStateOf("SYSTEM ONLINE") }
-    val brain = remember { WilbedBrain() }
+    val wilbedAI = remember { WilbedAI() }
     val messages = remember {
         mutableStateListOf(
             Message(
@@ -175,7 +175,7 @@ private fun WilbedApp(activity: MainActivity) {
         if (cleanText.isNotEmpty()) {
             messages.add(Message("YOU", cleanText, timestamp()))
             status = "PROCESSING REQUEST"
-            val reply = brain.respond(cleanText)
+            val reply = wilbedAI.respond(cleanText)
             messages.add(Message("WILBED", reply, timestamp()))
             activity.speak(reply)
             status = "SYSTEM ONLINE"
