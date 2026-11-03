@@ -57,43 +57,133 @@ class WilbedBrain {
             "YOUR PRACTICE TASK\n${lesson.task}\n\nTry the task and send me your code. Type 'next lesson' to continue or 'change language' to choose another course."
     }
 
+    private fun explainTopic(topic: String): String {
+        val selected = language ?: return "Which language should I use for the example? You can also ask me to explain it in general."
+        val lowerTopic = topic.lowercase(Locale.ROOT)
+        val explanation = when {
+            "variable" in lowerTopic -> "A variable is a named place where a program stores a value. You can use its name to read the value later."
+            "string" in lowerTopic || "text" in lowerTopic -> "A string is text stored by a program. It is usually written inside quotation marks."
+            "loop" in lowerTopic -> "A loop repeats instructions. It saves you from writing the same instructions many times."
+            "function" in lowerTopic || "method" in lowerTopic -> "A function is a reusable block of code. It can receive information called parameters and may return a result."
+            "condition" in lowerTopic || "if statement" in lowerTopic -> "A condition helps a program make a decision. An if block runs when its condition is true; else can handle another case."
+            "list" in lowerTopic || "array" in lowerTopic -> "A list or array keeps several values together. You can access an item by its position."
+            "boolean" in lowerTopic || "bool" in lowerTopic -> "A Boolean value is either true or false. It is often used in conditions."
+            "class" in lowerTopic || "object" in lowerTopic -> "A class is a blueprint for creating objects. Objects can hold data and provide functions that work with that data."
+            "input" in lowerTopic || "output" in lowerTopic || "print" in lowerTopic -> "Input is information a program receives. Output is information it displays or sends back."
+            else -> return "Tell me which part of " + topic + " you want explained, or paste a small example and I'll break it down."
+        }
+        val example = when (selected) {
+            "python" -> when {
+                "variable" in lowerTopic -> "player = \"Alex\"\nscore = 10"
+                "string" in lowerTopic || "text" in lowerTopic -> "message = \"Hello, Alex!\"\nprint(message)"
+                "loop" in lowerTopic -> "for number in range(1, 4):\n    print(number)"
+                "function" in lowerTopic || "method" in lowerTopic -> "def greet(name):\n    return \"Hello, \" + name"
+                "condition" in lowerTopic || "if statement" in lowerTopic -> "score = 70\nif score >= 50:\n    print(\"Passed\")\nelse:\n    print(\"Try again\")"
+                "list" in lowerTopic || "array" in lowerTopic -> "games = [\"Chess\", \"Football\"]\nprint(games[0])"
+                else -> "is_ready = True\nprint(is_ready)"
+            }
+            "kotlin" -> when {
+                "variable" in lowerTopic -> "val player = \"Alex\"\nvar score = 10"
+                "string" in lowerTopic || "text" in lowerTopic -> "val message = \"Hello, Alex!\"\nprintln(message)"
+                "loop" in lowerTopic -> "for (number in 1..3) {\n    println(number)\n}"
+                "function" in lowerTopic || "method" in lowerTopic -> "fun greet(name: String): String {\n    return \"Hello, \$name\"\n}"
+                "condition" in lowerTopic || "if statement" in lowerTopic -> "val score = 70\nif (score >= 50) {\n    println(\"Passed\")\n} else {\n    println(\"Try again\")\n}"
+                "list" in lowerTopic || "array" in lowerTopic -> "val games = listOf(\"Chess\", \"Football\")\nprintln(games[0])"
+                else -> "val isReady = true\nprintln(isReady)"
+            }
+            "java" -> "String player = \"Alex\";\nint score = 10;\nSystem.out.println(player + \" \" + score);"
+            "javascript" -> "const player = \"Alex\";\nlet score = 10;\nconsole.log(player, score);"
+            "c++" -> "#include <iostream>\nusing namespace std;\nint main() {\n    string player = \"Alex\";\n    int score = 10;\n    cout << player << \" \" << score;\n    return 0;\n}"
+            "html" -> "<h1>Hello, Alex!</h1>\n<p>I am learning HTML.</p>"
+            "css" -> "p {\n    color: blue;\n    font-size: 18px;\n}"
+            else -> "score = 10"
+        }
+        return selected.uppercase(Locale.ROOT) + ": " + topic + "\n\n" + explanation + "\n\nEXAMPLE\n" + example + "\n\nTry changing one value and tell me what you think will happen."
+    }
+
+    private fun practiceReply(): String {
+        val selected = language ?: return "Tell me which language you are practising, for example: 'Give me a Python exercise'."
+        val task = courses[selected]?.getOrNull(lessonIndex)?.task
+            ?: "Write a small program that stores a value and displays it."
+        return "Let's practise " + selected.uppercase(Locale.ROOT) + "!\n\nCHALLENGE\n" + task +
+            "\n\nTry it yourself first. Send me your code and I will review it, explain likely mistakes, and guide you with hints."
+    }
+
     fun respond(message: String): String {
         val text = message.trim()
         val lower = text.lowercase(Locale.ROOT)
-        if (text.isBlank()) return "I am listening. What would you like me to do?"
-        val wantsCourse = listOf("teach", "learn", "course", "lesson", "study", "start").any { it in lower }
+        if (text.isBlank()) return "I'm ready. What would you like to explore?"
+
         val chosen = when {
             "javascript" in lower || Regex("\\bjs\\b").containsMatchIn(lower) -> "javascript"
             Regex("c\\s*\\+\\s*\\+|\\bcpp\\b").containsMatchIn(lower) -> "c++"
-            else -> courses.keys.firstOrNull { it in lower }
+            else -> courses.keys.firstOrNull { Regex("\\b" + Regex.escape(it) + "\\b").containsMatchIn(lower) }
         }
-        if (chosen != null && wantsCourse) {
+        val learningIntent = listOf("teach", "learn", "course", "lesson", "study", "start learning", "want to learn", "beginner", "from scratch", "from the beginning")
+            .any { it in lower }
+
+        if (chosen != null && (learningIntent || lower.startsWith("start ") || lower.startsWith("i want"))) {
             language = chosen
             lessonIndex = 0
-            return "Great! Let's learn ${chosen.uppercase(Locale.ROOT)} step by step.\n\n${lessonReply()}"
+            return "Great! I'll teach you " + chosen.uppercase(Locale.ROOT) +
+                " from the basics, one step at a time. Each lesson has an explanation, an example, and a task.\n\n" + lessonReply()
         }
+
         if (lower in listOf("teach me programming", "learn programming", "programming tutor", "teach me to code", "learn to code", "start coding")) {
             language = null
-            return "I can teach several programming languages, one step at a time.\n\n${courseMenu()}"
+            return "I can teach Python, Kotlin, Java, JavaScript, C++, HTML, CSS, and more. Just say: 'Teach me Python from scratch'."
         }
-        if (lower in listOf("change language", "choose language", "other language", "programming languages")) {
+
+        if (lower in listOf("change language", "choose language", "other language", "switch language")) {
             language = null
-            return courseMenu()
+            return "Which language would you like to learn next? Just ask me to teach it."
         }
+
         if (lower in listOf("next lesson", "next", "continue lesson", "continue")) {
-            val selected = language ?: return "Choose a language first.\n\n${courseMenu()}"
+            val selected = language ?: return "Which language would you like to learn? For example: 'Teach me Kotlin'."
             val total = courses[selected]?.size ?: 0
-            if (lessonIndex < total - 1) { lessonIndex++; return lessonReply() }
-            return "You completed this beginner ${selected.uppercase(Locale.ROOT)} course. Choose another language or ask to practise a topic."
+            if (lessonIndex < total - 1) {
+                lessonIndex++
+                return lessonReply()
+            }
+            return "You completed this beginner " + selected.uppercase(Locale.ROOT) +
+                " course. Ask me for practice, a deeper explanation, or another language."
         }
-        if (listOf("repeat lesson", "explain again", "show lesson again").any { it in lower }) return lessonReply()
-        if (lower == "help" || "what can you do" in lower) return "I can chat offline, tell you the time and date, and teach Python, Kotlin, Java, JavaScript, C++, HTML, and CSS. Type 'teach me programming' to choose."
-        if (Regex("\\b(hello|hi|hey)\\b").containsMatchIn(lower)) return "Hello! I am Wilbed. Type 'teach me programming' to choose a language to learn."
-        if ("your name" in lower || "who are you" in lower) return "I am Wilbed AI, your personal assistant and multi-language programming tutor."
-        if ("time" in lower) return "The current time is ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())}."
-        if ("date" in lower || "today" in lower) return "Today's date is ${SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date())}."
-        if ("thank you" in lower || "thanks" in lower) return "You're welcome. Keep practising, one step at a time!"
-        if ("bye" in lower || "goodbye" in lower) return "Goodbye. Your lessons will be here when you return."
-        return "I am Wilbed, running in offline mode. I can help with greetings, time, date, and beginner programming lessons. Type 'help' to see what I can do."
+
+        if (listOf("repeat lesson", "explain again", "show lesson again", "i don't understand", "i dont understand").any { it in lower }) {
+            return if (language != null) "Let's go through it again.\n\n" + lessonReply()
+            else "That's okay. Tell me the topic or paste the part you don't understand."
+        }
+
+        if (listOf("give me an exercise", "give me a task", "practice", "practise", "quiz me", "assignment").any { it in lower }) return practiceReply()
+
+        if (listOf("check my code", "review my code", "debug this", "fix my code", "what is wrong with my code").any { it in lower }) {
+            return "Paste your code and tell me what you expected it to do. I'll inspect it, point out likely mistakes, explain why they happen, and suggest a correction. This offline version can review code but cannot run or compile it."
+        }
+
+        val topicWords = listOf("variable", "string", "text", "loop", "function", "method", "condition", "if statement", "list", "array", "boolean", "bool", "class", "object", "input", "output", "print")
+        val topic = topicWords.firstOrNull { it in lower }
+        if (topic != null && listOf("explain", "what is", "how does", "teach me", "help me understand", "tell me about").any { it in lower }) {
+            return explainTopic(topic)
+        }
+
+        if (lower == "help" || "what can you do" in lower) {
+            return "You can talk to me naturally. I can teach programming languages step by step, explain coding topics with examples, give exercises, review code you paste, and continue or repeat lessons.\n\nTry: 'Teach me Kotlin', 'Explain functions', or 'Give me a Python exercise'."
+        }
+        if (Regex("\\b(hello|hi|hey|good morning|good afternoon|good evening)\\b").containsMatchIn(lower)) {
+            return "Hello! What would you like to work on today? Ask a question or tell me which programming language you want to learn."
+        }
+        if ("your name" in lower || "who are you" in lower) return "I'm Wilbed AI, your personal assistant and programming tutor."
+        if ("time" in lower) return "The current time is " + SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()) + "."
+        if ("date" in lower || "today" in lower) return "Today's date is " + SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date()) + "."
+        if ("thank you" in lower || "thanks" in lower) return "You're welcome! Keep experimenting and asking questions."
+        if ("bye" in lower || "goodbye" in lower) return "Goodbye! You can continue learning whenever you return."
+
+        return if (language != null) {
+            "Could you add a little more detail or paste an example? We're currently learning " +
+                language!!.uppercase(Locale.ROOT) + ", so I can relate the explanation to it."
+        } else {
+            "I don't have enough information to give a reliable answer while working offline. Try asking me to teach a language, explain a coding topic, or review code. An online AI connection can be added in a later upgrade for broader, more flexible conversations."
+        }
     }
 }
