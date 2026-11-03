@@ -6,6 +6,7 @@ A Python/Kivy personal assistant prototype.
 
 - Futuristic Kivy chat interface with an animated AI orb.
 - Offline replies for greetings, help, the current time, and today's date.
+- A beginner Kotlin programming tutor with short explanations, code examples, exercises, and lesson progression.
 - A separate `assistant.py` module for Wilbed's local command logic.
 
 ## Run on a computer
@@ -45,6 +46,7 @@ The first Android build can take a while because Buildozer downloads the Android
 ## Development roadmap
 
 1. Offline assistant brain and chat connection.
-2. Voice input and spoken responses.
-3. Android integrations with user-granted permissions.
-4. Optional online AI connection.
+2. Beginner Kotlin lessons, examples, and practice tasks.
+3. Voice input and spoken responses.
+4. Android integrations with user-granted permissions.
+5. Optional online AI connection.
