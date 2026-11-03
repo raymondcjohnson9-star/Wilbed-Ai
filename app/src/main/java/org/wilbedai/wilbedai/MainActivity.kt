@@ -24,6 +24,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
@@ -155,8 +156,9 @@ private fun timestamp(): String = SimpleDateFormat("h:mm a", Locale.getDefault()
 private fun WilbedApp(activity: MainActivity) {
     var draft by rememberSaveable { mutableStateOf("") }
     var showTools by rememberSaveable { mutableStateOf(false) }
+    var showMemory by rememberSaveable { mutableStateOf(false) }
     var status by rememberSaveable { mutableStateOf("SYSTEM ONLINE") }
-    val wilbedAI = remember { WilbedAI() }
+    val wilbedAI = remember { WilbedAI(activity) }
     val messages = remember {
         mutableStateListOf(
             Message(
@@ -197,9 +199,39 @@ private fun WilbedApp(activity: MainActivity) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.lastIndex)
     }
 
+    if (showMemory) {
+        AlertDialog(
+            onDismissRequest = { showMemory = false },
+            containerColor = Panel,
+            title = { Text("WILBED MEMORY", color = Cyan, fontWeight = FontWeight.Bold) },
+            text = {
+                val savedMemories = wilbedAI.memories()
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("These are facts you explicitly asked Wilbed to remember. They stay on this device.", color = Muted, fontSize = 12.sp)
+                    if (savedMemories.isEmpty()) {
+                        Text("No saved memories yet.", color = SoftWhite, fontSize = 13.sp)
+                    } else {
+                        savedMemories.forEachIndexed { index, fact ->
+                            Text("${index + 1}. $fact", color = SoftWhite, fontSize = 13.sp)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showMemory = false }) { Text("CLOSE", color = Cyan) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    wilbedAI.respond("forget all memories")
+                    showMemory = false
+                    messages.add(Message("WILBED", "All saved memories have been cleared from this device.", timestamp()))
+                }) { Text("CLEAR MEMORIES", color = Violet) }
+            }
+        )
+    }
+
     Box(
-        Modifier.fillMaxSize().background(
-            Brush.verticalGradient(listOf(Color(0xFF101D36), Night, Color(0xFF080D1B)))
+        Modifier.fillMaxSize().background(            Brush.verticalGradient(listOf(Color(0xFF101D36), Night, Color(0xFF080D1B)))
         )
     ) {
         Scaffold(containerColor = Color.Transparent) { padding ->
@@ -220,6 +252,9 @@ private fun WilbedApp(activity: MainActivity) {
                     Column(Modifier.weight(1f)) {
                         Text("WILBED", color = SoftWhite, fontSize = 21.sp, fontWeight = FontWeight.Black, letterSpacing = 2.4.sp)
                         Text("PERSONAL AI  /  NEURAL INTERFACE", color = Muted, fontSize = 8.sp, letterSpacing = 1.sp)
+                    }
+                    IconButton(onClick = { showMemory = true }) {
+                        Icon(Icons.Default.Bookmark, contentDescription = "Saved memories", tint = Cyan)
                     }
                     IconButton(onClick = {
                         activity.stopSpeaking()
