@@ -20,12 +20,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.StopCircle
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -34,11 +38,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 private val Night = Color(0xFF050914)
@@ -48,6 +57,7 @@ private val Cyan = Color(0xFF42E8FF)
 private val Violet = Color(0xFF9B75FF)
 private val SoftWhite = Color(0xFFEAF4FF)
 private val Muted = Color(0xFF91A4C2)
+private val Green = Color(0xFF54E6B0)
 
 class MainActivity : ComponentActivity() {
     private var speechRecognizer: SpeechRecognizer? = null
@@ -70,6 +80,15 @@ class MainActivity : ComponentActivity() {
         textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wilbed_reply")
     }
 
+    fun stopSpeaking() {
+        textToSpeech?.stop()
+    }
+
+    fun stopListening() {
+        speechRecognizer?.cancel()
+        isListening = false
+    }
+
     fun startVoiceInput(onResult: (String) -> Unit) {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             isListening = false
@@ -87,9 +106,7 @@ class MainActivity : ComponentActivity() {
                 override fun onError(error: Int) { isListening = false }
                 override fun onResults(results: Bundle?) {
                     isListening = false
-                    val spokenText = results
-                        ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                        ?.firstOrNull()
+                    val spokenText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
                     if (!spokenText.isNullOrBlank()) speechCallback?.invoke(spokenText)
                 }
                 override fun onPartialResults(partialResults: Bundle?) {}
@@ -130,38 +147,49 @@ private fun WilbedTheme(content: @Composable () -> Unit) {
     )
 }
 
-private data class Message(val sender: String, val text: String)
+private data class Message(val sender: String, val text: String, val time: String)
+
+private fun timestamp(): String = SimpleDateFormat("h:mm a", Locale.getDefault()).format(Date())
 
 @Composable
 private fun WilbedApp(activity: MainActivity) {
     var draft by rememberSaveable { mutableStateOf("") }
+    var showTools by rememberSaveable { mutableStateOf(false) }
+    var status by rememberSaveable { mutableStateOf("SYSTEM ONLINE") }
     val brain = remember { WilbedBrain() }
     val messages = remember {
         mutableStateListOf(
             Message(
                 "WILBED",
-                "Hello! I'm Wilbed, your AI assistant and programming tutor.\n\nAsk me to teach you any programming language, explain a topic, review your code, or give you a practice task."
+                "Welcome to Wilbed AI.\n\nI'm ready to help you learn, build and explore. Ask me to teach you a programming language, explain a concept, review code or give you a challenge.",
+                timestamp()
             )
         )
     }
     val listState = rememberLazyListState()
+    val clipboard = LocalClipboardManager.current
     val listening by remember { derivedStateOf { activity.isListening } }
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) activity.startVoiceInput { sendText ->
-            addVoiceMessage(sendText, messages, brain, activity) { draft = "" }
-        }
-    }
 
     fun sendMessage(messageText: String) {
         val cleanText = messageText.trim()
         if (cleanText.isNotEmpty()) {
-            messages.add(Message("YOU", cleanText))
+            messages.add(Message("YOU", cleanText, timestamp()))
+            status = "PROCESSING REQUEST"
             val reply = brain.respond(cleanText)
-            messages.add(Message("WILBED", reply))
+            messages.add(Message("WILBED", reply, timestamp()))
             activity.speak(reply)
+            status = "SYSTEM ONLINE"
             draft = ""
+        }
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            activity.startVoiceInput { spoken -> sendMessage(spoken) }
+        } else {
+            status = "MICROPHONE PERMISSION DENIED"
         }
     }
 
@@ -171,74 +199,66 @@ private fun WilbedApp(activity: MainActivity) {
 
     Box(
         Modifier.fillMaxSize().background(
-            Brush.verticalGradient(listOf(Color(0xFF101D36), Night, Color(0xFF090D1C)))
+            Brush.verticalGradient(listOf(Color(0xFF101D36), Night, Color(0xFF080D1B)))
         )
     ) {
         Scaffold(containerColor = Color.Transparent) { padding ->
             Column(
-                Modifier.fillMaxSize().padding(padding).padding(horizontal = 16.dp, vertical = 12.dp)
+                Modifier.fillMaxSize().padding(padding).padding(horizontal = 15.dp, vertical = 10.dp)
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+                // Futuristic identity header and conversation controls
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         Modifier.size(48.dp).clip(RoundedCornerShape(16.dp)).background(
                             Brush.linearGradient(listOf(Cyan, Violet))
                         ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = "Wilbed AI", tint = Color.White, modifier = Modifier.size(25.dp))
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "Wilbed AI", tint = Color.White, modifier = Modifier.size(26.dp))
                     }
-                    Spacer(Modifier.width(12.dp))
+                    Spacer(Modifier.width(11.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("WILBED", color = SoftWhite, fontSize = 21.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-                        Text("NEURAL ASSISTANT  •  LEARNING CORE", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
+                        Text("WILBED", color = SoftWhite, fontSize = 21.sp, fontWeight = FontWeight.Black, letterSpacing = 2.4.sp)
+                        Text("PERSONAL AI  /  NEURAL INTERFACE", color = Muted, fontSize = 8.sp, letterSpacing = 1.sp)
                     }
-                    Surface(
-                        color = Color(0xFF103342),
-                        shape = RoundedCornerShape(30.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF236176))
-                    ) {
-                        Row(
-                            Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(Modifier.size(6.dp).clip(CircleShape).background(Cyan))
-                            Spacer(Modifier.width(6.dp))
-                            Text("SYSTEM READY", color = Cyan, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        }
+                    IconButton(onClick = {
+                        activity.stopSpeaking()
+                        activity.stopListening()
+                        messages.clear()
+                        messages.add(Message("WILBED", "New conversation started. What shall we work on?", timestamp()))
+                        status = "SYSTEM ONLINE"
+                    }) {
+                        Icon(Icons.Default.Add, contentDescription = "New conversation", tint = Cyan)
                     }
                 }
 
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(13.dp))
                 Surface(
-                    color = Color(0x66101A2D),
-                    shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x553D6685)),
+                    color = Color(0xAA101A2D),
+                    shape = RoundedCornerShape(15.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x663D6685)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.GraphicEq, contentDescription = null, tint = Cyan, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(8.dp))
+                        Box(Modifier.size(8.dp).clip(CircleShape).background(if (listening) Violet else Green))
+                        Spacer(Modifier.width(9.dp))
                         Column(Modifier.weight(1f)) {
-                            Text(if (listening) "VOICE INPUT ACTIVE" else "VOICE LINK STANDBY", color = if (listening) Cyan else SoftWhite, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            Text("Tap the microphone to speak with Wilbed", color = Muted, fontSize = 10.sp)
+                            Text(if (listening) "LISTENING TO YOUR VOICE" else status, color = if (listening) Violet else Green, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                            Text(if (listening) "Speak clearly. Wilbed is listening." else "Chat ready  •  Voice input available", color = Muted, fontSize = 9.sp)
                         }
-                        Text("V2.1", color = Violet, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Icon(Icons.Default.GraphicEq, contentDescription = "Audio system", tint = Cyan, modifier = Modifier.size(20.dp))
                     }
                 }
 
-                Spacer(Modifier.height(14.dp))
-
+                Spacer(Modifier.height(13.dp))
                 LazyColumn(
                     modifier = Modifier.weight(1f).fillMaxWidth(),
                     state = listState,
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
-                    contentPadding = PaddingValues(top = 4.dp, bottom = 14.dp)
+                    verticalArrangement = Arrangement.spacedBy(13.dp),
+                    contentPadding = PaddingValues(top = 4.dp, bottom = 12.dp)
                 ) {
                     items(messages) { message ->
                         val mine = message.sender == "YOU"
@@ -248,54 +268,78 @@ private fun WilbedApp(activity: MainActivity) {
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (!mine) {
-                                    Box(Modifier.size(23.dp).clip(RoundedCornerShape(8.dp)).background(Brush.linearGradient(listOf(Cyan, Violet))), contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(13.dp))
+                                    Box(
+                                        Modifier.size(22.dp).clip(RoundedCornerShape(7.dp)).background(Brush.linearGradient(listOf(Cyan, Violet))),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
                                     }
                                     Spacer(Modifier.width(7.dp))
                                 }
-                                Text(if (mine) "YOU" else "WILBED AI", color = if (mine) Violet else Cyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                                Text(if (mine) "YOU" else "WILBED AI", color = if (mine) Violet else Cyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
+                                Spacer(Modifier.width(7.dp))
+                                Text(message.time, color = Muted, fontSize = 8.sp)
                             }
                             Spacer(Modifier.height(5.dp))
                             Surface(
                                 color = if (mine) Color(0xFF282449) else Panel,
                                 shape = RoundedCornerShape(
-                                    topStart = 17.dp,
-                                    topEnd = 17.dp,
+                                    topStart = 17.dp, topEnd = 17.dp,
                                     bottomEnd = if (mine) 5.dp else 17.dp,
                                     bottomStart = if (mine) 17.dp else 5.dp
                                 ),
-                                border = androidx.compose.foundation.BorderStroke(
-                                    1.dp,
-                                    if (mine) Color(0xFF6550A0) else Color(0xFF263D5A)
-                                ),
-                                modifier = Modifier.widthIn(max = 340.dp)
+                                border = androidx.compose.foundation.BorderStroke(1.dp, if (mine) Color(0xFF6550A0) else Color(0xFF263D5A)),
+                                modifier = Modifier.widthIn(max = 350.dp)
                             ) {
-                                Text(
-                                    message.text,
-                                    color = SoftWhite,
-                                    fontSize = 14.sp,
-                                    lineHeight = 21.sp,
-                                    modifier = Modifier.padding(horizontal = 15.dp, vertical = 13.dp)
-                                )
+                                Column(Modifier.padding(horizontal = 14.dp, vertical = 11.dp)) {
+                                    Text(
+                                        message.text,
+                                        color = SoftWhite,
+                                        fontSize = 13.sp,
+                                        lineHeight = 20.sp,
+                                        fontFamily = if (!mine && (message.text.contains("fun main") || message.text.contains("print(") || message.text.contains("console.log"))) FontFamily.Monospace else FontFamily.Default
+                                    )
+                                    if (!mine) {
+                                        Spacer(Modifier.height(7.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                                            TextButton(
+                                                onClick = { clipboard.setText(AnnotatedString(message.text)) },
+                                                contentPadding = PaddingValues(horizontal = 7.dp, vertical = 2.dp)
+                                            ) {
+                                                Icon(Icons.Default.ContentCopy, contentDescription = null, tint = Muted, modifier = Modifier.size(13.dp))
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("COPY", color = Muted, fontSize = 8.sp)
+                                            }
+                                            TextButton(
+                                                onClick = { activity.speak(message.text) },
+                                                contentPadding = PaddingValues(horizontal = 7.dp, vertical = 2.dp)
+                                            ) {
+                                                Icon(Icons.Default.VolumeUp, contentDescription = null, tint = Cyan, modifier = Modifier.size(14.dp))
+                                                Spacer(Modifier.width(4.dp))
+                                                Text("PLAY", color = Cyan, fontSize = 8.sp)
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
                 }
 
                 if (messages.size == 1) {
-                    Text("QUICK COMMANDS", color = Muted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
-                    Spacer(Modifier.height(8.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        SuggestionChip("Teach me Python") { sendMessage("Teach me Python from the beginning") }
-                        SuggestionChip("Explain loops") { sendMessage("Explain loops with examples") }
+                    Text("START WITH A COMMAND", color = Muted, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                    Spacer(Modifier.height(7.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        QuickAction("Teach me Python") { sendMessage("Teach me Python from the beginning") }
+                        QuickAction("Explain loops") { sendMessage("Explain loops with examples") }
                     }
-                    Spacer(Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
                 }
 
                 Surface(
                     color = Color(0xFF111C30),
-                    shape = RoundedCornerShape(24.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF344C6B)),
+                    shape = RoundedCornerShape(23.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, if (listening) Violet else Color(0xFF344C6B)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
@@ -304,23 +348,26 @@ private fun WilbedApp(activity: MainActivity) {
                     ) {
                         IconButton(
                             onClick = {
-                                if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                if (listening) {
+                                    activity.stopListening()
+                                } else if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
                                     activity.startVoiceInput { spoken -> sendMessage(spoken) }
                                 } else {
                                     permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
                                 }
                             },
-                            modifier = Modifier.size(44.dp).background(if (listening) Color(0xFF7C3150) else Color(0xFF18394B), CircleShape)
+                            modifier = Modifier.size(43.dp).background(if (listening) Color(0xFF71345B) else Color(0xFF18394B), CircleShape)
                         ) {
-                            Icon(if (listening) Icons.Default.StopCircle else Icons.Default.Mic, contentDescription = "Speak to Wilbed", tint = if (listening) Color.White else Cyan)
+                            Icon(if (listening) Icons.Default.StopCircle else Icons.Default.Mic, contentDescription = if (listening) "Stop listening" else "Speak to Wilbed", tint = if (listening) Color.White else Cyan)
                         }
                         Spacer(Modifier.width(5.dp))
                         OutlinedTextField(
                             value = draft,
                             onValueChange = { draft = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text("Message Wilbed...", color = Muted, fontSize = 13.sp) },
+                            placeholder = { Text("Ask Wilbed anything...", color = Muted, fontSize = 12.sp) },
                             maxLines = 4,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                             shape = RoundedCornerShape(18.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color.Transparent,
@@ -329,11 +376,11 @@ private fun WilbedApp(activity: MainActivity) {
                                 unfocusedContainerColor = Color.Transparent
                             )
                         )
-                        Spacer(Modifier.width(4.dp))
+                        Spacer(Modifier.width(3.dp))
                         IconButton(
                             onClick = { sendMessage(draft) },
                             enabled = draft.isNotBlank(),
-                            modifier = Modifier.size(46.dp).background(
+                            modifier = Modifier.size(44.dp).background(
                                 if (draft.isNotBlank()) Brush.linearGradient(listOf(Cyan, Violet)) else Brush.linearGradient(listOf(Color(0xFF344057), Color(0xFF344057))),
                                 CircleShape
                             )
@@ -342,35 +389,25 @@ private fun WilbedApp(activity: MainActivity) {
                         }
                     }
                 }
-                Spacer(Modifier.height(5.dp))
-                Text("WILBED AI  •  VOICE + TEXT INTERFACE", color = Color(0xFF62738F), fontSize = 8.sp, letterSpacing = 1.1.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+                Spacer(Modifier.height(6.dp))
+                Text(
+                    "WILBED AI  •  TEXT + VOICE  •  YOUR LEARNING COMPANION",
+                    color = Color(0xFF62738F), fontSize = 7.sp, letterSpacing = 0.8.sp,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
             }
         }
     }
 }
 
-private fun addVoiceMessage(
-    text: String,
-    messages: MutableList<Message>,
-    brain: WilbedBrain,
-    activity: MainActivity,
-    clearDraft: () -> Unit
-) {
-    messages.add(Message("YOU", text))
-    val reply = brain.respond(text)
-    messages.add(Message("WILBED", reply))
-    activity.speak(reply)
-    clearDraft()
-}
-
 @Composable
-private fun SuggestionChip(label: String, onClick: () -> Unit) {
+private fun QuickAction(label: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         color = Color(0xFF14243A),
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(20.dp),
         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF36516F))
     ) {
-        Text(label, color = Cyan, fontSize = 11.sp, modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp))
+        Text(label, color = Cyan, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 11.dp, vertical = 9.dp))
     }
 }
