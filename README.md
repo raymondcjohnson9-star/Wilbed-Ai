@@ -1,52 +1,59 @@
-# WILBED AI
+# ATLAS
 
-A Python/Kivy personal assistant prototype.
+ATLAS is an independent personal-assistant project being developed from the existing Python/Kivy Wilbed AI application.
 
-## Current features
+## Project direction
 
-- Futuristic Kivy chat interface with an animated AI orb.
-- Offline replies for greetings, help, the current time, and today's date.
-- A multi-language programming tutor for Python, Kotlin, Java, JavaScript, C++, HTML, and CSS, with short explanations, code examples, exercises, and lesson progression.
-- A separate `assistant.py` module for Wilbed's local command logic.
+ATLAS is a modular assistant, not a single chatbot. Planned components include request routing, task planning, deterministic tools, a separately trained language model, local approved memory, document processing, voice, and Android integrations.
+
+The project is being developed without paid AI APIs. The current foundation uses local Python logic. It does not yet provide general-purpose model reasoning, online research, background wake-word detection, or phone automation.
 
 ## Run on a computer
 
-1. Install Python 3.10 or newer.
-2. Install the dependencies:
+Use Python 3.10 or newer.
 
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
+```bash
+python -m venv .venv
+python -m pip install -r requirements.txt
+python main.py
+```
 
-3. Start Wilbed:
+## Run tests
 
-   ```bash
-   python main.py
-   ```
+```bash
+python -m unittest discover -s tests -v
+```
 
 ## Build for Android
 
-This project is being prepared for Android packaging with Buildozer.
-
-On a supported Linux environment, install Buildozer and its Android build dependencies, then run:
+Android packaging uses Buildozer and python-for-android. The Android package naming is intentionally retained from the existing configuration while the visible app name changes to ATLAS.
 
 ```bash
+python -m pip install buildozer cython==0.29.33
 buildozer android debug
 ```
 
-The first Android build can take a while because Buildozer downloads the Android toolchain.
+The first build downloads the Android toolchain and can take considerable time.
 
-## Project files
+## Architecture
 
-- `main.py` — Kivy user interface and chat interaction.
-- `assistant.py` — offline assistant response logic.
-- `requirements.txt` — Python dependencies.
+- `main.py` — Kivy user interface.
+- `assistant.py` — existing offline programming-tutor fallback.
+- `atlas_core/router.py` — first ATLAS request-routing layer.
+- `atlas_core/math_engine.py` — safe arithmetic evaluator.
+- `tests/` — automated tests for deterministic tools.
 - `buildozer.spec` — Android packaging configuration.
 
-## Development roadmap
+## Development stages
 
-1. Offline assistant brain and chat connection.
-2. Beginner lessons, examples, and practice tasks for Python, Kotlin, Java, JavaScript, C++, HTML, and CSS.
-3. Voice input and spoken responses.
-4. Android integrations with user-granted permissions.
-5. Optional online AI connection.
+1. Foundation and safe tool routing.
+2. Language understanding, task planning and recommendations.
+3. Dataset preparation and a small independently trained language model.
+4. Document processing, research and advanced analysis.
+5. Local memory and personalisation controls.
+6. Voice activation and Android integrations.
+7. Security, reliability, performance and release.
+
+## Safety and reliability
+
+ATLAS must not claim an action succeeded unless the result is confirmed. It must ask before sending messages, placing calls, submitting forms, making purchases, or taking other consequential actions. Calculations and legal or tax estimates must show their assumptions and limitations.
