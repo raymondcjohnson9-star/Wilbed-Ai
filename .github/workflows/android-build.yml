@@ -35,6 +35,8 @@ jobs:
             ~/.buildozer
           key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
           restore-keys: buildozer-${{ runner.os }}-
+      - name: Run ATLAS unit tests
+        run: python -m unittest discover -s tests -v
       - name: Build debug APK
         run: buildozer android debug
       - name: Upload APK
