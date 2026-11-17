@@ -1,84 +1,49 @@
-# WILBED AI
+# ATLAS — Native Android Assistant
 
-A Python/Kivy personal assistant prototype.
+ATLAS is being developed as a native Android application. The user interface is built with **Kotlin and Jetpack Compose**. Kivy and Buildozer are not used to build the app UI or Android APK.
 
-## Current features
+## Architecture
 
-- Futuristic Kivy chat interface with an animated AI orb.
-- Offline replies for greetings, help, the current time, and today's date.
-- A multi-language programming tutor for Python, Kotlin, Java, JavaScript, C++, HTML, and CSS, with short explanations, code examples, exercises, and lesson progression.
-- A separate `assistant.py` module for Wilbed's local command logic.
+- **Android app:** Kotlin, Jetpack Compose, Android platform APIs.
+- **Local intelligence:** Kotlin tools for deterministic tasks and a Python-based development/training workspace for model research.
+- **Language model:** An independently trained, locally runnable model is a future milestone. No paid AI API is required by this foundation.
+- **Memory:** Private on-device storage, with explicit user control.
+- **Voice:** Android speech recognition and Text-to-Speech. Background wake-word support will be designed separately around Android's permission and foreground-service rules.
 
-## OpenAI backend
+## Build on a computer
 
-Wilbed keeps the OpenAI API key on a trusted server. Never place the key in
-the Android app or commit it to GitHub.
+Requirements:
+- Android Studio (recommended), or JDK 17 and Gradle 8.9.
+- Android SDK platform 35.
 
-1. In a Python 3.10+ environment, install the backend packages:
-
-   ```bash
-   python -m pip install -r backend/requirements.txt
-   ```
-
-2. Set `OPENAI_API_KEY` as a server environment variable.
-3. Start the backend from the repository root:
-
-   ```bash
-   uvicorn backend.server:app --host 0.0.0.0 --port 8000
-   ```
-
-4. Deploy the backend behind HTTPS, then set `API_BASE_URL` in `config.py`
-   to its HTTPS base URL. Rebuild the Android app.
-
-The backend uses the OpenAI Responses API and keeps the conversation going
-with the previous response ID. If `API_BASE_URL` is empty, Wilbed continues
-to use its built-in offline assistant.
-
-## Voice controls
-
-Tap VOICE in the app footer to start Android speech recognition. Wilbed then
-sends the recognized words to the configured AI backend and speaks the reply
-using Android text-to-speech. Microphone access is requested when you tap
-VOICE; the app does not continuously record in the background.
-
-## Run on a computer
-
-1. Install Python 3.10 or newer.
-2. Install the dependencies:
-
-   ```bash
-   python -m pip install -r requirements.txt
-   ```
-
-3. Start Wilbed:
-
-   ```bash
-   python main.py
-   ```
-
-## Build for Android
-
-This project is being prepared for Android packaging with Buildozer.
-
-On a supported Linux environment, install Buildozer and its Android build dependencies, then run:
+Open this repository in Android Studio and run the `:app` configuration, or from the repository root run:
 
 ```bash
-buildozer android debug
+gradle assembleDebug
 ```
 
-The first Android build can take a while because Buildozer downloads the Android toolchain.
+The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
 
-## Project files
+## Current native foundation
 
-- `main.py` — Kivy user interface and chat interaction.
-- `assistant.py` — offline assistant response logic.
-- `requirements.txt` — Python dependencies.
-- `buildozer.spec` — Android packaging configuration.
+- Jetpack Compose Android interface.
+- Text input and Android speech input.
+- Android Text-to-Speech.
+- Explicit local memory.
+- Offline programming tutor.
+- A deterministic local arithmetic engine is being added to the request router.
 
-## Development roadmap
+## Roadmap
 
-1. Offline assistant brain and chat connection.
-2. Beginner lessons, examples, and practice tasks for Python, Kotlin, Java, JavaScript, C++, HTML, and CSS.
-3. Voice input and spoken responses.
-4. Android integrations with user-granted permissions.
-5. Optional online AI connection.
+1. Native Android foundation and safe local tools.
+2. Intent routing, planning, reasoning and recommendations.
+3. Dataset preparation and independent small language-model training.
+4. Document reading, structured data, research and analysis.
+5. User-controlled memory.
+6. Wake-word detection and reliable voice interaction.
+7. Permission-based Android actions such as calls, messages, reminders and app launching.
+8. Security, tests, accessibility and release.
+
+## Safety and reliability
+
+ATLAS must never claim an action succeeded unless the platform confirms it. It must ask before sending messages, placing calls, submitting forms, making purchases, or deleting data. Tax and legal estimates must show the jurisdiction, tax year, assumptions and source of the rules used.
