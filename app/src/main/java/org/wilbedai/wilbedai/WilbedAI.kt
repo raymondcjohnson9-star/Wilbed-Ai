@@ -17,6 +17,7 @@ class WilbedAI(context: Context) {
         if (clean.isBlank()) return "ATLAS is ready. Give a voice or console command."
 
         val plan = AtlasTaskPlanner.plan(clean)
+        plan.clarificationQuestion?.let { return it }
         return when (plan.tool) {
             AtlasTaskPlanner.Tool.CALCULATOR ->
                 AtlasRequestRouter.calculationReply(clean)
@@ -35,10 +36,10 @@ class WilbedAI(context: Context) {
             }
 
             AtlasTaskPlanner.Tool.CLOCK ->
-                "The current time is " + SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date()) + "."
+                "The current time is " + SimpleDateFormat("hh:mm a", Locale.US).format(Date()) + "."
 
             AtlasTaskPlanner.Tool.CALENDAR ->
-                "Today's date is " + SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()).format(Date()) + "."
+                "Today's date is " + SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.US).format(Date()) + "."
 
             AtlasTaskPlanner.Tool.PROGRAMMING_TUTOR -> offlineBrain.respond(clean)
 
@@ -56,7 +57,7 @@ class WilbedAI(context: Context) {
 
     private fun handleMemory(message: String): String {
         val lower = message.lowercase(Locale.ROOT)
-        val prefixes = listOf("please remember that ", "please remember ", "remember that ", "remember this: ", "remember ")
+        val prefixes = listOf("please remember that ", "please remember ", "remember that ", "remember this: ", "remember ", "save this ", "save that ", "make a note that ", "note that ")
         val prefix = prefixes.firstOrNull { lower.startsWith(it) }
 
         if (prefix != null) {
