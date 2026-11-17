@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to Wilbed")
+                putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to ATLAS")
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
             }
             recognizer.startListening(intent)
@@ -162,7 +162,7 @@ private fun WilbedApp(activity: MainActivity) {
     val messages = remember {
         mutableStateListOf(
             Message(
-                "WILBED",
+                "ATLAS",
                 "Welcome to Wilbed AI.\n\nI'm ready to help you learn, build and explore. Ask me to teach you a programming language, explain a concept, review code or give you a challenge.",
                 timestamp()
             )
@@ -178,7 +178,7 @@ private fun WilbedApp(activity: MainActivity) {
             messages.add(Message("YOU", cleanText, timestamp()))
             status = "PROCESSING REQUEST"
             val reply = wilbedAI.respond(cleanText)
-            messages.add(Message("WILBED", reply, timestamp()))
+            messages.add(Message("ATLAS", reply, timestamp()))
             activity.speak(reply)
             status = "SYSTEM ONLINE"
             draft = ""
@@ -203,7 +203,7 @@ private fun WilbedApp(activity: MainActivity) {
         AlertDialog(
             onDismissRequest = { showMemory = false },
             containerColor = Panel,
-            title = { Text("WILBED MEMORY", color = Cyan, fontWeight = FontWeight.Bold) },
+            title = { Text("ATLAS MEMORY", color = Cyan, fontWeight = FontWeight.Bold) },
             text = {
                 val savedMemories = wilbedAI.memories()
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -224,7 +224,7 @@ private fun WilbedApp(activity: MainActivity) {
                 TextButton(onClick = {
                     wilbedAI.respond("forget all memories")
                     showMemory = false
-                    messages.add(Message("WILBED", "All saved memories have been cleared from this device.", timestamp()))
+                    messages.add(Message("ATLAS", "All saved memories have been cleared from this device.", timestamp()))
                 }) { Text("CLEAR MEMORIES", color = Violet) }
             }
         )
@@ -246,11 +246,11 @@ private fun WilbedApp(activity: MainActivity) {
                         ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = "Wilbed AI", tint = Color.White, modifier = Modifier.size(26.dp))
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "ATLAS", tint = Color.White, modifier = Modifier.size(26.dp))
                     }
                     Spacer(Modifier.width(11.dp))
                     Column(Modifier.weight(1f)) {
-                        Text("WILBED", color = SoftWhite, fontSize = 21.sp, fontWeight = FontWeight.Black, letterSpacing = 2.4.sp)
+                        Text("ATLAS", color = SoftWhite, fontSize = 21.sp, fontWeight = FontWeight.Black, letterSpacing = 2.4.sp)
                         Text("PERSONAL AI  /  NEURAL INTERFACE", color = Muted, fontSize = 8.sp, letterSpacing = 1.sp)
                     }
                     IconButton(onClick = { showMemory = true }) {
@@ -260,7 +260,7 @@ private fun WilbedApp(activity: MainActivity) {
                         activity.stopSpeaking()
                         activity.stopListening()
                         messages.clear()
-                        messages.add(Message("WILBED", "New conversation started. What shall we work on?", timestamp()))
+                        messages.add(Message("ATLAS", "New conversation started. What shall we work on?", timestamp()))
                         status = "SYSTEM ONLINE"
                     }) {
                         Icon(Icons.Default.Add, contentDescription = "New conversation", tint = Cyan)
@@ -311,7 +311,7 @@ private fun WilbedApp(activity: MainActivity) {
                                     }
                                     Spacer(Modifier.width(7.dp))
                                 }
-                                Text(if (mine) "YOU" else "WILBED AI", color = if (mine) Violet else Cyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
+                                Text(if (mine) "YOU" else "ATLAS", color = if (mine) Violet else Cyan, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
                                 Spacer(Modifier.width(7.dp))
                                 Text(message.time, color = Muted, fontSize = 8.sp)
                             }
@@ -393,14 +393,14 @@ private fun WilbedApp(activity: MainActivity) {
                             },
                             modifier = Modifier.size(43.dp).background(if (listening) Color(0xFF71345B) else Color(0xFF18394B), CircleShape)
                         ) {
-                            Icon(if (listening) Icons.Default.StopCircle else Icons.Default.Mic, contentDescription = if (listening) "Stop listening" else "Speak to Wilbed", tint = if (listening) Color.White else Cyan)
+                            Icon(if (listening) Icons.Default.StopCircle else Icons.Default.Mic, contentDescription = if (listening) "Stop listening" else "Speak to ATLAS", tint = if (listening) Color.White else Cyan)
                         }
                         Spacer(Modifier.width(5.dp))
                         OutlinedTextField(
                             value = draft,
                             onValueChange = { draft = it },
                             modifier = Modifier.weight(1f),
-                            placeholder = { Text("Ask Wilbed anything...", color = Muted, fontSize = 12.sp) },
+                            placeholder = { Text("Ask ATLAS...", color = Muted, fontSize = 12.sp) },
                             maxLines = 4,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                             shape = RoundedCornerShape(18.dp),
