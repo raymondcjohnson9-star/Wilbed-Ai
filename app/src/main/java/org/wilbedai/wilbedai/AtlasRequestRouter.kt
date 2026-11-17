@@ -4,7 +4,7 @@ import java.util.Locale
 
 /** Routes only clearly arithmetic requests to the deterministic calculator. */
 object AtlasRequestRouter {
-    private val prefixes = listOf("calculate ", "compute ", "work out ", "what is ", "what's ")
+    private val prefixes = listOf("could you calculate ", "can you calculate ", "please calculate ", "could you compute ", "can you compute ", "please compute ", "can you work out ", "please work out ", "how much is ", "calculate ", "compute ", "work out ", "what is ", "what's ")
 
     fun calculationReply(message: String): String? {
         val clean = message.trim()
