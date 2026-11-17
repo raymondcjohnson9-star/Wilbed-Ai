@@ -108,7 +108,7 @@ class AtlasApp(App):
         )
 
         title = Label(
-            text="[b][color=00D9FF]W[/color]ILBED AI[/b]",
+            text="[b][color=00D9FF]A[/color]TLAS[/b]",
             markup=True,
             font_size=sp(24),
             halign="left"
