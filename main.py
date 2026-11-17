@@ -13,10 +13,10 @@ from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 
-from assistant import get_response
+from atlas_core import get_response
 
 
-# WILBED AI COLOURS
+# ATLAS AI COLOURS
 BG = (0.015, 0.025, 0.07, 1)
 PANEL = (0.035, 0.055, 0.12, 1)
 PURPLE = (0.55, 0.25, 1, 1)
@@ -61,11 +61,11 @@ class AIOrb(Widget):
         self.core.size = (diameter, diameter)
 
 
-class WilbedAI(App):
+class AtlasApp(App):
 
     def build(self):
 
-        self.title = "WILBED AI"
+        self.title = "ATLAS AI"
 
         self.root_layout = BoxLayout(
             orientation="vertical",
@@ -149,7 +149,7 @@ class WilbedAI(App):
     def create_status(self):
 
         self.status = Label(
-            text="[color=00D9FF]●[/color] WILBED SYSTEM ONLINE",
+            text="[color=00D9FF]●[/color] ATLAS SYSTEM ONLINE",
             markup=True,
             size_hint_y=None,
             height=dp(30),
@@ -187,8 +187,8 @@ class WilbedAI(App):
         )
 
         self.add_message(
-            "WILBED",
-            "System initialized. Hello! I am Wilbed, your personal AI assistant."
+            "ATLAS",
+            "System initialized. Hello! I am ATLAS, your personal AI assistant."
         )
 
         self.chat_scroll.add_widget(self.chat_box)
@@ -196,7 +196,7 @@ class WilbedAI(App):
 
     def add_message(self, sender, message):
 
-        color = "00D9FF" if sender == "WILBED" else "B78AFF"
+        color = "00D9FF" if sender == "ATLAS" else "B78AFF"
 
         bubble = BoxLayout(
             orientation="vertical",
@@ -260,7 +260,7 @@ class WilbedAI(App):
         )
 
         self.message_input = TextInput(
-            hint_text="Message Wilbed...",
+            hint_text="Message ATLAS...",
             multiline=False,
             font_size=sp(14),
             foreground_color=WHITE,
@@ -330,7 +330,7 @@ class WilbedAI(App):
     def footer_action(self, name):
 
         if name == "CODE":
-            self.add_message("WILBED", get_response("teach me programming"))
+            self.add_message("ATLAS", get_response("teach me programming"))
             return
 
         if name == "VOICE":
@@ -339,7 +339,7 @@ class WilbedAI(App):
             )
         else:
             self.status.text = (
-                f"[color=00D9FF]● WILBED {name}[/color]"
+                f"[color=00D9FF]● ATLAS {name}[/color]"
             )
 
     def send_message(self, instance):
@@ -353,10 +353,10 @@ class WilbedAI(App):
 
         self.message_input.text = ""
 
-        # Ask the local Wilbed brain for a reply.
+        # Ask the local ATLAS brain for a reply.
         reply = get_response(message)
-        self.add_message("WILBED", reply)
+        self.add_message("ATLAS", reply)
 
 
 if __name__ == "__main__":
-    WilbedAI().run()
+    AtlasApp().run()
