@@ -57,7 +57,7 @@ class WilbedAI(context: Context) {
 
     private fun handleMemory(message: String): String {
         val lower = message.lowercase(Locale.ROOT)
-        val prefixes = listOf("please remember that ", "please remember ", "remember that ", "remember this: ", "remember ", "save this ", "save that ", "make a note that ", "note that ")
+        val prefixes = listOf("please remember that ", "please remember ", "remember that ", "remember this: ", "remember this ", "remember ", "save this ", "save that ", "make a note that ", "note that ")
         val prefix = prefixes.firstOrNull { lower.startsWith(it) }
 
         if (prefix != null) {
