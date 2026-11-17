@@ -163,7 +163,7 @@ private fun WilbedApp(activity: MainActivity) {
         mutableStateListOf(
             Message(
                 "ATLAS",
-                "Welcome to Wilbed AI.\n\nI'm ready to help you learn, build and explore. Ask me to teach you a programming language, explain a concept, review code or give you a challenge.",
+                "Welcome to ATLAS.\n\nI'm ready to help you learn, build and explore. Ask me to teach you a programming language, explain a concept, review code or give you a challenge.",
                 timestamp()
             )
         )
@@ -207,7 +207,7 @@ private fun WilbedApp(activity: MainActivity) {
             text = {
                 val savedMemories = wilbedAI.memories()
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("These are facts you explicitly asked Wilbed to remember. They stay on this device.", color = Muted, fontSize = 12.sp)
+                    Text("These are facts you explicitly asked ATLAS to remember. They stay on this device.", color = Muted, fontSize = 12.sp)
                     if (savedMemories.isEmpty()) {
                         Text("No saved memories yet.", color = SoftWhite, fontSize = 13.sp)
                     } else {
@@ -282,7 +282,7 @@ private fun WilbedApp(activity: MainActivity) {
                         Spacer(Modifier.width(9.dp))
                         Column(Modifier.weight(1f)) {
                             Text(if (listening) "LISTENING TO YOUR VOICE" else status, color = if (listening) Violet else Green, fontSize = 9.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                            Text(if (listening) "Speak clearly. Wilbed is listening." else "Chat ready  •  Voice input available", color = Muted, fontSize = 9.sp)
+                            Text(if (listening) "Speak clearly. ATLAS is listening." else "Chat ready  •  Voice input available", color = Muted, fontSize = 9.sp)
                         }
                         Icon(Icons.Default.GraphicEq, contentDescription = "Audio system", tint = Cyan, modifier = Modifier.size(20.dp))
                     }
@@ -426,7 +426,7 @@ private fun WilbedApp(activity: MainActivity) {
                 }
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "WILBED AI  •  TEXT + VOICE  •  YOUR LEARNING COMPANION",
+                    "ATLAS  •  TEXT + VOICE  •  PERSONAL ASSISTANT",
                     color = Color(0xFF62738F), fontSize = 7.sp, letterSpacing = 0.8.sp,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
