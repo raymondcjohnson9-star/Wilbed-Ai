@@ -2,7 +2,7 @@ from datetime import datetime
 import re
 
 
-class WilbedBrain:
+class ATLASBrain:
     """Offline assistant with beginner courses in several programming languages."""
 
     def __init__(self):
@@ -115,9 +115,9 @@ class WilbedBrain:
             return "I can chat offline, tell you the time and date, and teach beginner Python, Kotlin, Java, JavaScript, C++, HTML, and CSS. Type 'teach me programming' to choose."
 
         if re.search(r"\b(hello|hi|hey)\b", lowered):
-            return "Hello! I am Wilbed. Type 'teach me programming' to choose a language to learn."
+            return "Hello! I am ATLAS. Type 'teach me programming' to choose a language to learn."
         if "your name" in lowered or "who are you" in lowered:
-            return "I am Wilbed AI, your personal assistant and multi-language programming tutor."
+            return "I am ATLAS AI, your personal assistant and multi-language programming tutor."
         if "time" in lowered:
             return "The current time is " + datetime.now().strftime("%I:%M %p") + "."
         if "date" in lowered or "today" in lowered:
@@ -129,9 +129,9 @@ class WilbedBrain:
         return "I am an offline assistant, so I cannot answer every question yet. Type 'teach me programming' to choose a language, or 'help' to see my features."
 
 
-brain = WilbedBrain()
+brain = ATLASBrain()
 
 
 def get_response(message):
-    """Return Wilbed's reply for a text message."""
+    """Return ATLAS's reply for a text message."""
     return brain.get_response(message)
