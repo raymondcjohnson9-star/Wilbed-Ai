@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         textToSpeech = TextToSpeech(this) { status ->
-            if (status == TextToSpeech.SUCCESS) textToSpeech?.language = Locale.getDefault()
+            if (status == TextToSpeech.SUCCESS) textToSpeech?.language = Locale.US
         }
         setContent { AtlasTheme { AtlasDashboard(this) } }
     }
@@ -108,7 +108,8 @@ class MainActivity : ComponentActivity() {
             })
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.US.toLanguageTag())
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, Locale.US.toLanguageTag())
                 putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to ATLAS")
             }
             recognizer.startListening(intent)
