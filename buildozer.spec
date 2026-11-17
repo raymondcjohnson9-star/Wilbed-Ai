@@ -1,6 +1,6 @@
 [app]
 
-title = Wilbed AI
+title = ATLAS
 package.name = wilbedai
 package.domain = org.wilbedai
 
@@ -8,7 +8,7 @@ source.dir = .
 source.include_exts = py,png,jpg,jpeg,kv,atlas
 source.exclude_dirs = .git,.venv,venv,bin,__pycache__,.buildozer
 
-version = 0.1.0
+version = 0.2.0
 
 requirements = python3,kivy
 
