@@ -40,6 +40,6 @@ class WilbedAI(context: Context) {
             return "All memories saved by Wilbed have been cleared from this device."
         }
 
-        return offlineBrain.respond(clean)
+        AtlasRequestRouter.calculationReply(clean)?.let { return it }\n\n        return offlineBrain.respond(clean)
     }
 }
