@@ -144,19 +144,18 @@ private fun AtlasTheme(content: @Composable () -> Unit) {
 @Composable
 private fun AtlasDashboard(activity: MainActivity) {
     var command by rememberSaveable { mutableStateOf("") }
-    var status by rememberSaveable { mutableStateOf("SYSTEM ONLINE") }
-    var result by rememberSaveable { mutableStateOf("ATLAS is ready. Tap the microphone or enter a command.") }
-    var activeSection by rememberSaveable { mutableStateOf("HOME") }
+    var status by rememberSaveable { mutableStateOf("READY") }
+    var result by rememberSaveable { mutableStateOf("ATLAS is ready. Tap the central control and speak a command.") }
     val listening by remember { derivedStateOf { activity.isListening } }
     val atlas = remember { WilbedAI(activity) }
 
     fun execute(raw: String) {
         val clean = raw.trim()
         if (clean.isBlank()) return
-        status = "PROCESSING REQUEST"
+        status = "PROCESSING"
         val answer = atlas.respond(clean)
         result = answer
-        status = "SYSTEM ONLINE"
+        status = "READY"
         command = ""
         activity.speak(answer)
     }
@@ -165,184 +164,222 @@ private fun AtlasDashboard(activity: MainActivity) {
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) activity.startVoiceInput { execute(it) }
-        else status = "MICROPHONE PERMISSION DENIED"
+        else status = "MIC PERMISSION NEEDED"
     }
 
     fun activateMicrophone() {
         if (listening) {
             activity.stopListening()
+            status = "READY"
         } else if (ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            status = "LISTENING"
             activity.startVoiceInput { execute(it) }
         } else {
             permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 
+    val pulse = androidx.compose.animation.core.rememberInfiniteTransition(label = "atlas-pulse")
+    val glow by pulse.animateFloat(
+        initialValue = 0.88f,
+        targetValue = 1.08f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(1250),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "atlas-glow"
+    )
+
     Box(
         Modifier.fillMaxSize().background(
-            Brush.verticalGradient(listOf(Color(0xFF101D36), Night, Color(0xFF080D1B)))
+            Brush.verticalGradient(listOf(Color(0xFF071A31), Night, Color(0xFF090B1C)))
         )
     ) {
         Column(
-            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState())
+                .padding(horizontal = 18.dp, vertical = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(17.dp)
         ) {
+            // Compact header: settings are available, but there is no bottom navigation.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    Modifier.size(48.dp).clip(RoundedCornerShape(16.dp))
+                    Modifier.size(43.dp).clip(RoundedCornerShape(14.dp))
                         .background(Brush.linearGradient(listOf(Cyan, Violet))),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.AutoAwesome, contentDescription = "ATLAS", tint = Color.White, modifier = Modifier.size(27.dp))
+                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(25.dp))
                 }
                 Spacer(Modifier.width(11.dp))
                 Column(Modifier.weight(1f)) {
-                    Text("ATLAS", color = SoftWhite, fontSize = 23.sp, fontWeight = FontWeight.Black, letterSpacing = 2.5.sp)
-                    Text("INTELLIGENT COMMAND CENTRE", color = Muted, fontSize = 9.sp, letterSpacing = 1.2.sp)
+                    Text("ATLAS", color = SoftWhite, fontSize = 24.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                    Text("PERSONAL INTELLIGENCE SYSTEM", color = Muted, fontSize = 8.sp, letterSpacing = 1.2.sp)
                 }
-                IconButton(onClick = { activeSection = "SETTINGS" }) {
+                IconButton(onClick = {
+                    result = "Settings and permissions will be managed here. Microphone access remains under your control."
+                    status = "SYSTEM SETTINGS"
+                }) {
                     Icon(Icons.Default.Settings, contentDescription = "Settings", tint = Cyan)
                 }
             }
 
+            // One-line system state.
             Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp))
-                    .background(Color(0xAA101A2D))
-                    .border(1.dp, Color(0x663D6685), RoundedCornerShape(15.dp))
-                    .padding(horizontal = 13.dp, vertical = 11.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(50.dp))
+                    .background(Color(0xCC10233B))
+                    .border(1.dp, Color(0x6642E8FF), RoundedCornerShape(50.dp))
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Box(Modifier.size(9.dp).clip(CircleShape).background(if (listening) Violet else Green))
+                Box(Modifier.size(8.dp).clip(CircleShape).background(if (listening) Violet else Green))
                 Spacer(Modifier.width(9.dp))
-                Column(Modifier.weight(1f)) {
-                    Text(if (listening) "VOICE INPUT ACTIVE" else status, color = if (listening) Violet else Green, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                    Text(if (listening) "ATLAS is listening for your command" else "Local assistant interface ready", color = Muted, fontSize = 10.sp)
-                }
-                Text("ONLINE", color = Green, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    when { listening -> "LISTENING"; status == "PROCESSING" -> "THINKING"; else -> status },
+                    color = if (listening) Violet else Green,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.2.sp
+                )
+                Spacer(Modifier.weight(1f))
+                Text("LOCAL-FIRST", color = Muted, fontSize = 9.sp, letterSpacing = 1.sp)
             }
 
-            // Central assistant identity: a command hub, not a conversation screen.
+            // Animated assistant identity. The pulsing rings are lightweight Compose shapes.
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(26.dp))
-                    .background(Brush.verticalGradient(listOf(Color(0xFF102B4B), Color(0xFF081426))))
-                    .border(1.dp, Color(0xFF176B9C), RoundedCornerShape(26.dp))
-                    .padding(18.dp),
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp))
+                    .background(Brush.verticalGradient(listOf(Color(0xFF102B4B), Color(0xFF080F20))))
+                    .border(1.dp, Color(0xFF176B9C), RoundedCornerShape(28.dp))
+                    .padding(vertical = 22.dp, horizontal = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    Modifier.size(156.dp).clip(CircleShape)
-                        .background(Brush.radialGradient(listOf(Color(0xFF1D79B9), Color(0xFF101D3D), Night)))
-                        .border(2.dp, Cyan.copy(alpha = 0.8f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(Modifier.size(124.dp).border(1.dp, Violet.copy(alpha = 0.7f), CircleShape), contentAlignment = Alignment.Center) {
-                        Icon(Icons.Default.AutoAwesome, contentDescription = "ATLAS assistant", tint = Cyan, modifier = Modifier.size(66.dp))
+                Box(Modifier.size(218.dp), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier.size(206.dp * glow).border(1.dp, Cyan.copy(alpha = 0.30f), CircleShape)
+                    )
+                    Box(
+                        Modifier.size(174.dp).border(2.dp, Violet.copy(alpha = 0.55f), CircleShape)
+                    )
+                    Box(
+                        Modifier.size(145.dp).clip(CircleShape)
+                            .background(Brush.radialGradient(listOf(Color(0xFF236EAA), Color(0xFF101D3D), Night)))
+                            .border(2.dp, Cyan.copy(alpha = 0.9f), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            contentDescription = "ATLAS animated assistant",
+                            tint = Cyan,
+                            modifier = Modifier.size(66.dp)
+                        )
                     }
                 }
-                Spacer(Modifier.height(12.dp))
-                Text("YOUR INTELLIGENT ASSISTANT", color = SoftWhite, fontSize = 14.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.1.sp)
-                Text("Think  •  Plan  •  Analyse  •  Execute", color = Muted, fontSize = 11.sp)
-                Spacer(Modifier.height(14.dp))
-                FilledTonalButton(
+                Text(
+                    when { listening -> "I'M LISTENING"; status == "PROCESSING" -> "THINKING"; else -> "ATLAS IS READY" },
+                    color = SoftWhite,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.6.sp
+                )
+                Spacer(Modifier.height(5.dp))
+                Text("Your voice-controlled assistant", color = Muted, fontSize = 11.sp)
+                Spacer(Modifier.height(19.dp))
+                Button(
                     onClick = { activateMicrophone() },
-                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = if (listening) Violet else Color(0xFF0D537B), contentColor = Color.White),
-                    modifier = Modifier.fillMaxWidth().height(54.dp)
+                    modifier = Modifier.fillMaxWidth().height(58.dp),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (listening) Color(0xFF633C9C) else Color(0xFF087FA4),
+                        contentColor = Color.White
+                    )
                 ) {
                     Icon(if (listening) Icons.Default.StopCircle else Icons.Default.Mic, contentDescription = null)
-                    Spacer(Modifier.width(9.dp))
-                    Text(if (listening) "STOP LISTENING" else "ACTIVATE VOICE", fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Text(if (listening) "STOP LISTENING" else "TAP TO SPEAK", fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
                 }
                 Spacer(Modifier.height(8.dp))
-                Text("Voice activation is user-controlled in this version.", color = Muted, fontSize = 10.sp)
+                Text("Microphone starts only when you activate it.", color = Muted, fontSize = 9.sp)
             }
 
-            SectionTitle("COMMAND CONSOLE", "Issue a task without opening a chat.")
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = command,
-                    onValueChange = { command = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("Enter a command...", color = Muted) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = SoftWhite,
-                        unfocusedTextColor = SoftWhite,
-                        focusedBorderColor = Cyan,
-                        unfocusedBorderColor = Color(0xFF344C6B),
-                        cursorColor = Cyan
-                    )
-                )
-                Spacer(Modifier.width(8.dp))
-                Button(onClick = { execute(command) }, enabled = command.isNotBlank()) {
-                    Text("RUN")
-                }
-            }
-
-            SectionTitle("SMART TOOLS", "Specialised systems available in the ATLAS workspace.")
-            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    ToolTile("Calculations", "Arithmetic engine", Icons.Default.Calculate, Modifier.weight(1f)) { command = "Calculate 125 * 48" }
-                    ToolTile("Documents", "Reading workspace", Icons.Default.Description, Modifier.weight(1f)) { activeSection = "DOCUMENTS"; result = "Document reading tools are planned for the next development stage." }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    ToolTile("Research", "Knowledge engine", Icons.Default.Search, Modifier.weight(1f)) { activeSection = "RESEARCH"; result = "Research integration is planned. ATLAS will distinguish verified sources from assumptions." }
-                    ToolTile("Planning", "Tasks and decisions", Icons.Default.TaskAlt, Modifier.weight(1f)) { activeSection = "PLANNING"; result = "Planning and multi-step task execution are being developed." }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-                    ToolTile("Files", "Organisation", Icons.Default.FolderOpen, Modifier.weight(1f)) { activeSection = "FILES"; result = "File organisation will require your permission before changes are made." }
-                    ToolTile("Recommendations", "Decision support", Icons.Default.Lightbulb, Modifier.weight(1f)) { activeSection = "RECOMMENDATIONS"; result = "Decision support will compare options, explain trade-offs and state uncertainty." }
-                }
-            }
-
-            SectionTitle("INTELLIGENCE SYSTEMS", "Modular engines, developed and tested independently.")
+            // Task console replaces chat bubbles.
             Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-                    .background(Panel).border(1.dp, Color(0xFF263D5A), RoundedCornerShape(18.dp)).padding(14.dp),
-                verticalArrangement = Arrangement.spacedBy(11.dp)
-            ) {
-                EngineStatus("Reasoning engine", "Foundation planned", false)
-                EngineStatus("Mathematics engine", "Local arithmetic available", true)
-                EngineStatus("Language model", "Independent training planned", false)
-                EngineStatus("Memory engine", "Local memory foundation", true)
-                EngineStatus("Voice engine", "Tap-to-activate voice", true)
-                EngineStatus("Phone operations", "Permission integrations planned", false)
-            }
-
-            SectionTitle("LATEST RESULT", "ATLAS task output")
-            Column(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp))
-                    .background(Panel).border(1.dp, Color(0xFF263D5A), RoundedCornerShape(18.dp)).padding(15.dp)
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp))
+                    .background(Panel)
+                    .border(1.dp, Color(0xFF245071), RoundedCornerShape(20.dp))
+                    .padding(15.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.TaskAlt, contentDescription = null, tint = Cyan, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.TaskAlt, contentDescription = null, tint = Cyan, modifier = Modifier.size(19.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("TASK REPORT", color = Cyan, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.sp)
+                    Text("TASK REPORT", color = Cyan, fontWeight = FontWeight.Bold, fontSize = 10.sp, letterSpacing = 1.2.sp)
                     Spacer(Modifier.weight(1f))
-                    IconButton(onClick = { activity.speak(result) }, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.VolumeUp, contentDescription = "Read result aloud", tint = Cyan)
+                    IconButton(onClick = { activity.speak(result) }, modifier = Modifier.size(30.dp)) {
+                        Icon(Icons.Default.VolumeUp, contentDescription = "Read task report aloud", tint = Cyan)
                     }
                 }
                 Text(result, color = SoftWhite, fontSize = 13.sp, lineHeight = 19.sp)
             }
 
-            Row(
-                Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF0B1425))
-                    .padding(12.dp),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                listOf("HOME", "TOOLS", "KNOWLEDGE", "SETTINGS").forEach { section ->
-                    Text(
-                        section,
-                        color = if (activeSection == section) Cyan else Muted,
-                        fontSize = 9.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { activeSection = section }.padding(5.dp)
-                    )
+            // Optional typed command field, visually secondary to voice control.
+            OutlinedTextField(
+                value = command,
+                onValueChange = { command = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Or type a command…", color = Muted) },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = SoftWhite,
+                    unfocusedTextColor = SoftWhite,
+                    focusedBorderColor = Cyan,
+                    unfocusedBorderColor = Color(0xFF344C6B),
+                    cursorColor = Cyan
+                ),
+                trailingIcon = {
+                    IconButton(onClick = { execute(command) }, enabled = command.isNotBlank()) {
+                        Icon(Icons.Default.AutoAwesome, contentDescription = "Run command", tint = Cyan)
+                    }
+                }
+            )
+
+            Text("QUICK SYSTEMS", color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                ToolTile("Calculator", "Local maths", Icons.Default.Calculate, Modifier.weight(1f)) {
+                    command = "Calculate 125 * 48"
+                    execute(command)
+                }
+                ToolTile("Planning", "Task support", Icons.Default.TaskAlt, Modifier.weight(1f)) {
+                    result = "Planning tools are being developed. ATLAS will show steps and ask before consequential actions."
+                }
+                ToolTile("Knowledge", "Smart answers", Icons.Default.Lightbulb, Modifier.weight(1f)) {
+                    result = "ATLAS can currently answer supported offline requests. Broader knowledge features are planned."
                 }
             }
-            Text("ATLAS  •  LOCAL-FIRST INTELLIGENCE  •  USER CONTROLLED", color = Muted, fontSize = 9.sp, modifier = Modifier.align(Alignment.CenterHorizontally))
+
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(15.dp))
+                    .background(Color(0xFF0B1425)).padding(13.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("VOICE", color = Muted, fontSize = 9.sp)
+                    Text("READY", color = Green, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+                Column {
+                    Text("MATH ENGINE", color = Muted, fontSize = 9.sp)
+                    Text("AVAILABLE", color = Green, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+                Column {
+                    Text("MEMORY", color = Muted, fontSize = 9.sp)
+                    Text("LOCAL", color = Green, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Text(
+                "ATLAS  •  USER CONTROLLED  •  BUILDING INTELLIGENCE",
+                color = Muted,
+                fontSize = 8.sp,
+                letterSpacing = 0.8.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
     }
 }
