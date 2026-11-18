@@ -13,6 +13,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,6 +42,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -265,11 +268,10 @@ private fun AtlasDashboard(activity: MainActivity) {
                             .border(2.dp, Cyan.copy(alpha = 0.9f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.AutoAwesome,
-                            contentDescription = "ATLAS animated assistant",
-                            tint = Cyan,
-                            modifier = Modifier.size(66.dp)
+                        HolographicAtlasFace(
+                            listening = listening,
+                            thinking = status == "PROCESSING",
+                            modifier = Modifier.fillMaxSize().padding(22.dp)
                         )
                     }
                 }
@@ -380,6 +382,99 @@ private fun AtlasDashboard(activity: MainActivity) {
                 letterSpacing = 0.8.sp,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
+        }
+    }
+}
+
+@Composable
+private fun HolographicAtlasFace(
+    listening: Boolean,
+    thinking: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val transition = androidx.compose.animation.core.rememberInfiniteTransition(label = "face-motion")
+    val motion by transition.animateFloat(
+        initialValue = 0.94f,
+        targetValue = 1.06f,
+        animationSpec = androidx.compose.animation.core.infiniteRepeatable(
+            animation = androidx.compose.animation.core.tween(
+                durationMillis = if (listening) 430 else 1050
+            ),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse
+        ),
+        label = "face-scale"
+    )
+    val eyeGlow = if (listening) Color(0xFFFFFFFF) else if (thinking) Violet else Cyan
+
+    Canvas(modifier) {
+        val cx = size.width / 2f
+        val cy = size.height / 2f
+        val faceW = size.width * 0.69f * motion
+        val faceH = size.height * 0.78f * motion
+        val left = cx - faceW / 2f
+        val top = cy - faceH / 2f
+
+        // Layered holographic head silhouette.
+        drawOval(
+            brush = Brush.radialGradient(
+                colors = listOf(Color(0xFF1A6A9B).copy(alpha = 0.34f), Color(0xFF101D3D).copy(alpha = 0.08f), Color.Transparent),
+                center = Offset(cx, cy),
+                radius = faceW * 0.85f
+            ),
+            topLeft = Offset(left, top),
+            size = androidx.compose.ui.geometry.Size(faceW, faceH)
+        )
+        drawOval(
+            color = Cyan.copy(alpha = 0.78f),
+            topLeft = Offset(left, top),
+            size = androidx.compose.ui.geometry.Size(faceW, faceH),
+            style = Stroke(width = 2.1.dp.toPx())
+        )
+        drawOval(
+            color = Violet.copy(alpha = 0.5f),
+            topLeft = Offset(left + 5.dp.toPx(), top + 5.dp.toPx()),
+            size = androidx.compose.ui.geometry.Size(faceW - 10.dp.toPx(), faceH - 10.dp.toPx()),
+            style = Stroke(width = 1.dp.toPx())
+        )
+
+        // Brow and cheek circuitry.
+        val eyeY = cy - faceH * 0.08f
+        val eyeSpread = faceW * 0.22f
+        drawLine(Cyan.copy(alpha = 0.45f), Offset(cx - eyeSpread - 10.dp.toPx(), eyeY - 13.dp.toPx()), Offset(cx - eyeSpread + 10.dp.toPx(), eyeY - 16.dp.toPx()), 1.2.dp.toPx())
+        drawLine(Cyan.copy(alpha = 0.45f), Offset(cx + eyeSpread - 10.dp.toPx(), eyeY - 16.dp.toPx()), Offset(cx + eyeSpread + 10.dp.toPx(), eyeY - 13.dp.toPx()), 1.2.dp.toPx())
+
+        // Bright eyes with small horizontal light streaks.
+        listOf(cx - eyeSpread, cx + eyeSpread).forEach { eyeX ->
+            drawCircle(eyeGlow.copy(alpha = 0.18f), radius = 10.dp.toPx() * motion, center = Offset(eyeX, eyeY))
+            drawRoundRect(
+                color = eyeGlow,
+                topLeft = Offset(eyeX - 7.dp.toPx(), eyeY - 2.5.dp.toPx()),
+                size = androidx.compose.ui.geometry.Size(14.dp.toPx(), 5.dp.toPx()),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx())
+            )
+            drawLine(eyeGlow.copy(alpha = 0.8f), Offset(eyeX - 11.dp.toPx(), eyeY + 8.dp.toPx()), Offset(eyeX + 11.dp.toPx(), eyeY + 8.dp.toPx()), 1.dp.toPx())
+        }
+
+        // Nose bridge and animated voice line.
+        drawLine(Cyan.copy(alpha = 0.5f), Offset(cx, eyeY + 8.dp.toPx()), Offset(cx - 3.dp.toPx(), cy + 15.dp.toPx()), 1.2.dp.toPx())
+        val mouthY = cy + faceH * 0.25f
+        if (listening || thinking) {
+            val bars = 7
+            for (i in 0 until bars) {
+                val x = cx + (i - (bars - 1) / 2f) * 7.dp.toPx()
+                val h = (if (listening) 5f + (i % 3) * 3f else 4f + (i % 2) * 2f) * motion
+                drawLine(Cyan, Offset(x, mouthY - h), Offset(x, mouthY + h), 2.dp.toPx())
+            }
+        } else {
+            drawLine(Cyan, Offset(cx - 13.dp.toPx(), mouthY), Offset(cx + 13.dp.toPx(), mouthY), 2.dp.toPx())
+            drawCircle(Violet.copy(alpha = 0.9f), radius = 2.dp.toPx(), center = Offset(cx, mouthY))
+        }
+
+        // Tiny temple nodes give the face a digital, holographic finish.
+        listOf(-1f, 1f).forEach { side ->
+            val nodeX = cx + side * faceW * 0.43f
+            drawCircle(Cyan.copy(alpha = 0.8f), radius = 2.2.dp.toPx(), center = Offset(nodeX, cy + 3.dp.toPx()))
+            drawLine(Cyan.copy(alpha = 0.45f), Offset(nodeX, cy + 3.dp.toPx()), Offset(nodeX + side * 7.dp.toPx(), cy + 15.dp.toPx()), 1.dp.toPx())
         }
     }
 }
