@@ -14,6 +14,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -44,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -255,25 +258,25 @@ private fun AtlasDashboard(activity: MainActivity) {
                     .padding(vertical = 22.dp, horizontal = 18.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(Modifier.size(218.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier.fillMaxWidth().height(330.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Soft hologram halo sits behind the supplied character artwork.
                     Box(
-                        Modifier.size(206.dp * glow).border(1.dp, Cyan.copy(alpha = 0.30f), CircleShape)
+                        Modifier.size(258.dp * glow)
+                            .border(1.dp, Cyan.copy(alpha = 0.24f), CircleShape)
                     )
                     Box(
-                        Modifier.size(174.dp).border(2.dp, Violet.copy(alpha = 0.55f), CircleShape)
+                        Modifier.size(226.dp)
+                            .border(1.5.dp, Violet.copy(alpha = 0.42f), CircleShape)
                     )
-                    Box(
-                        Modifier.size(145.dp).clip(CircleShape)
-                            .background(Brush.radialGradient(listOf(Color(0xFF236EAA), Color(0xFF101D3D), Night)))
-                            .border(2.dp, Cyan.copy(alpha = 0.9f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        HolographicAtlasFace(
-                            listening = listening,
-                            thinking = status == "PROCESSING",
-                            modifier = Modifier.fillMaxSize().padding(22.dp)
-                        )
-                    }
+                    Image(
+                        painter = painterResource(id = R.drawable.atlas_character),
+                        contentDescription = "ATLAS holographic AI character",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxHeight().width(250.dp)
+                    )
                 }
                 Text(
                     when { listening -> "I'M LISTENING"; status == "PROCESSING" -> "THINKING"; else -> "ATLAS IS READY" },
