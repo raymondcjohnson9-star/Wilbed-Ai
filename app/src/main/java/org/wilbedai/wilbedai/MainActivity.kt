@@ -343,8 +343,7 @@ private fun AtlasDashboard(activity: MainActivity) {
             Text("QUICK SYSTEMS", color = Cyan, fontSize = 10.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.3.sp)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ToolTile("Calculator", "Local maths", Icons.Default.Calculate, Modifier.weight(1f)) {
-                    command = "Calculate 125 * 48"
-                    execute(command)
+                    execute("Calculate 125 * 48")
                 }
                 ToolTile("Planning", "Task support", Icons.Default.TaskAlt, Modifier.weight(1f)) {
                     result = "Planning tools are being developed. ATLAS will show steps and ask before consequential actions."
