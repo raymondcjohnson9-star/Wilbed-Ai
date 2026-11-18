@@ -4,9 +4,7 @@ import java.util.Locale
 
 /**
  * Transparent English-first intent parser for offline ATLAS.
- *
- * It normalises common English phrasing and selects only allow-listed local tools.
- * It does not execute arbitrary code, shell commands, or external actions.
+ * Selects only allow-listed local tools; it never executes arbitrary code or commands.
  */
 object AtlasTaskPlanner {
     enum class Tool {
@@ -24,15 +22,19 @@ object AtlasTaskPlanner {
     fun plan(message: String): Plan {
         val text = normalise(message)
         if (text.isBlank()) {
-            return Plan(Tool.OFFLINE_GUIDANCE, "empty_request", clarificationQuestion = "What would you like ATLAS to do?")
+            return Plan(Tool.OFFLINE_GUIDANCE, "empty_request",
+                clarificationQuestion = "What would you like ATLAS to do?")
         }
 
-        // Destructive memory operations always take priority and require a second confirmation.
+        if (matchesAny(text, "hi", "hello", "hey", "good morning", "good afternoon", "good evening")) {
+            return Plan(Tool.HELP, "greeting")
+        }
+
+        // Destructive memory operations always require a separate confirmation command.
         if (text in setOf("confirm forget all memories", "confirm clear memories", "yes clear all my saved memories")) {
             return Plan(Tool.CONFIRMATION, "confirm_memory_deletion")
         }
-        if (matchesAny(text,
-                "forget all memories", "delete all memories", "clear my memories",
+        if (matchesAny(text, "forget all memories", "delete all memories", "clear my memories",
                 "clear all my memories", "forget everything you remember about me",
                 "delete everything you remember")) {
             return Plan(Tool.CONFIRMATION, "request_memory_deletion_confirmation", true)
@@ -47,7 +49,8 @@ object AtlasTaskPlanner {
                 "make a note that ", "note that "
             )).trim(' ', ':', '.', '!')
             return if (content.isBlank()) {
-                Plan(Tool.MEMORY, "save_explicit_memory", clarificationQuestion = "What information should I save?")
+                Plan(Tool.MEMORY, "save_explicit_memory",
+                    clarificationQuestion = "What information should I save?")
             } else Plan(Tool.MEMORY, "save_explicit_memory")
         }
         if (matchesAny(text, "what do you remember", "what do you remember about me",
@@ -60,21 +63,22 @@ object AtlasTaskPlanner {
             return if (AtlasRequestRouter.calculationReply(message) != null) {
                 Plan(Tool.CALCULATOR, "calculate")
             } else {
-                Plan(Tool.CALCULATOR, "calculate", clarificationQuestion = "What numbers and operations should I calculate?")
+                Plan(Tool.CALCULATOR, "calculate",
+                    clarificationQuestion = "Please say the numbers and operation, for example: add 8 and 5.")
             }
         }
 
         if (matchesAny(text, "what time is it", "whats the time", "tell me the time",
-                "current time", "time now", "check the time", "what is the time")) {
+                "current time", "time now", "check the time", "what is the time") ||
+            Regex("\\b(time|clock)\\b").containsMatchIn(text)) {
             return Plan(Tool.CLOCK, "current_time")
         }
+
         if (matchesAny(text, "whats todays date", "what is todays date", "todays date",
-                "what date is it", "what day is it", "tell me the date", "current date", "date today") ||
-            Regex("\\b(today|date)\\b").containsMatchIn(text)) {
+                "what date is it", "what day is it", "tell me the date", "current date",
+                "date today", "what is the date today") ||
+            Regex("\\b(what day|what date|todays date|date today)\\b").containsMatchIn(text)) {
             return Plan(Tool.CALENDAR, "current_date")
-        }
-        if (Regex("\\b(time|clock)\\b").containsMatchIn(text)) {
-            return Plan(Tool.CLOCK, "current_time")
         }
 
         if (matchesAny(text, "help", "what can you do", "show your abilities", "list your tools")) {
@@ -87,7 +91,8 @@ object AtlasTaskPlanner {
         }
 
         return Plan(Tool.OFFLINE_GUIDANCE, "needs_broader_language_model",
-            clarificationQuestion = if (text.split(' ').size <= 3) "Could you explain what you want me to do?" else null)
+            clarificationQuestion = if (text.split(' ').size <= 3)
+                "Could you explain what you want me to do?" else null)
     }
 
     private fun normalise(message: String): String =
@@ -115,8 +120,13 @@ object AtlasTaskPlanner {
 
     private fun isCalculationRequest(normalised: String, original: String): Boolean {
         if (AtlasRequestRouter.calculationReply(original) != null) return true
-        val hasMathWords = containsAny(normalised, "calculate", "compute", "work out", "add ",
-            "subtract ", "multiply ", "divide ", "how much is", "what is")
-        return hasMathWords && normalised.any { it.isDigit() }
+        val operationWords = listOf("calculate", "compute", "work out", "add ",
+            "subtract ", "multiply ", "divide ", "plus ", "minus ", "times ",
+            "multiplied by ", "divided by ", "how much is")
+        val hasOperation = operationWords.any { normalised.contains(it) }
+        val hasNumber = normalised.any { it.isDigit() } ||
+            Regex("\\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\\b")
+                .containsMatchIn(normalised)
+        return hasOperation && hasNumber
     }
 }
